@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CurricAlign Pro - Enrollments</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <i class="fa-solid fa-layer-group me-2"></i> CurricAlign Pro
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Dashboard</a></li>
+                    <li class="nav-item admin-only"><a class="nav-link" href="programs.html">Programs</a></li>
+                    <li class="nav-item admin-only"><a class="nav-link" href="admin_users.html">Users</a></li>
+                    <li class="nav-item"><a class="nav-link" href="students.html">Students</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="enrollments.html">Enrollments</a></li>
+                    <li class="nav-item"><a class="nav-link" href="plos.html">PLOs</a></li>
+                    <li class="nav-item"><a class="nav-link" href="courses.html">Courses</a></li>
+                    <li class="nav-item"><a class="nav-link" href="clos.html">CLOs</a></li>
+                    <li class="nav-item"><a class="nav-link" href="mapping.html">Mapping Matrix</a></li>
+                    <li class="nav-item admin-only"><a class="nav-link" href="reports.html">Reports</a></li>
+                    <li class="nav-item admin-only"><a class="nav-link" href="settings.html">Settings</a></li>
+                    <li class="nav-item ms-3 d-flex align-items-center">
+                        <span id="userDisplay" class="text-secondary me-3 small"></span>
+                        <button class="btn btn-sm btn-outline-danger" onclick="App.logout()">Logout</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5 page-container">
+        <div class="row align-items-end mb-4">
+            <div class="col-md-5">
+                <h1 class="mb-1">Enrollments & Transcript</h1>
+                <p class="text-secondary mb-0" id="pageSubtitle">Select a student to manage their courses.</p>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label text-secondary small">Filter by Student</label>
+                <select class="form-select form-control-custom bg-dark border-secondary text-white" id="filterStudent"
+                    onchange="onStudentSelect()">
+                    <option value="">-- Select a Student --</option>
+                </select>
+            </div>
+            <div class="col-md-3 text-end">
+                <button class="btn btn-outline-info me-2" onclick="openStudyPlan()" id="btnStudyPlan" disabled>
+                    <i class="fa-solid fa-map"></i> Study Plan
+                </button>
+                <button class="btn btn-primary-custom" onclick="openAddModal()" id="btnAddEnrollment" disabled>
+                    <i class="fa-solid fa-plus me-2"></i> Add Enrollment
+                </button>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-12">
+                <div class="glass-card p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Earned Credit Hours</h5>
+                        <h3 class="mb-0 text-success" id="totalCreditsView">0</h3>
+                    </div>
+                    <div class="progress bg-dark" style="height: 10px;">
+                        <div class="progress-bar bg-success" id="creditProgressBar" role="progressbar"
+                            style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="130"></div>
+                    </div>
+                    <small class="text-secondary mt-1 d-block">Assuming 130 credits for graduation</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-4">
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th width="30%">Course</th>
+                            <th width="15%">Semester</th>
+                            <th width="15%">Credits</th>
+                            <th width="15%">Status</th>
+                            <th width="10%">Grade</th>
+                            <th width="15%" class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="enrollmentTableBody">
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-secondary">Please select a student above to
+                                view enrollments.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="enrollmentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-white">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Add Enrollment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="enrollmentForm">
+                        <input type="hidden" id="enrollmentId">
+
+                        <div class="mb-3">
+                            <label class="form-label">Course</label>
+                            <select class="form-select form-control-custom" id="courseSelect" required></select>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Semester</label>
+                                <input type="text" class="form-control form-control-custom" id="semesterInput"
+                                    placeholder="e.g. Fall 2026" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Status</label>
+                                <select class="form-select form-control-custom" id="statusSelect" required>
+                                    <option value="Enrolled">Enrolled</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Dropped">Dropped</option>
+                                    <option value="Failed">Failed</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Grade</label>
+                            <input type="text" class="form-control form-control-custom" id="gradeInput"
+                                placeholder="e.g. A, B+, (Optional)">
+                        </div>
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary-custom" onclick="saveEnrollment()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/store.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script>
+        let modal;
+        let coursesMap = {};
+        let courseCreditMap = {};
+        let activeStudentId = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const session = Store.getSession();
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            modal = new bootstrap.Modal(document.getElementById('enrollmentModal'));
+
+            // Load Students for dropdown
+            const students = await Store.getStudents();
+            const filterDropdown = document.getElementById('filterStudent');
+            students.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = `${s.rollNumber} - ${s.name}`;
+                filterDropdown.appendChild(opt);
+            });
+
+            // Load Courses for modal
+            const courses = await Store.getCourses();
+            const courseSelectDropdown = document.getElementById('courseSelect');
+            courses.forEach(c => {
+                coursesMap[c.id] = `${c.code} - ${c.title}`;
+                courseCreditMap[c.id] = c.credits;
+
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = `${c.code} (${c.credits} Cr) - ${c.title}`;
+                courseSelectDropdown.appendChild(opt);
+            });
+
+            // Check if we arrived here with a student ID in the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const studentIdParam = urlParams.get('studentId');
+            if (studentIdParam) {
+                filterDropdown.value = studentIdParam;
+                onStudentSelect();
+            }
+
+            App.setupNavigation();
+        });
+
+        async function onStudentSelect() {
+            const dropdown = document.getElementById('filterStudent');
+            activeStudentId = dropdown.value;
+
+            const btnAdd = document.getElementById('btnAddEnrollment');
+            const btnPlan = document.getElementById('btnStudyPlan');
+
+            if (!activeStudentId) {
+                btnAdd.disabled = true;
+                btnPlan.disabled = true;
+                document.getElementById('enrollmentTableBody').innerHTML = `<tr><td colspan="6" class="text-center py-4 text-secondary">Please select a student above to view enrollments.</td></tr>`;
+                document.getElementById('totalCreditsView').textContent = '0';
+                document.getElementById('creditProgressBar').style.width = '0%';
+                return;
+            }
+
+            btnAdd.disabled = false;
+            btnPlan.disabled = false;
+            await renderTable();
+        }
+
+        function getStatusBadgeClass(status) {
+            switch (status) {
+                case 'Enrolled': return 'bg-info text-dark';
+                case 'Completed': return 'bg-success';
+                case 'Dropped': return 'bg-warning text-dark';
+                case 'Failed': return 'bg-danger';
+                default: return 'bg-secondary';
+            }
+        }
+
+        async function renderTable() {
+            if (!activeStudentId) return;
+
+            const enrollments = await Store.getEnrollments(activeStudentId);
+            const tbody = document.getElementById('enrollmentTableBody');
+            tbody.innerHTML = '';
+
+            let totalCredits = 0;
+
+            if (enrollments.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4">No enrollments found for this student.</td></tr>`;
+            } else {
+                enrollments.forEach(e => {
+                    const credits = courseCreditMap[e.courseId] || 0;
+
+                    // Only count completed courses towards earned credits
+                    if (e.status === 'Completed') {
+                        totalCredits += credits;
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${coursesMap[e.courseId] || 'Unknown Course'}</strong></td>
+                        <td>${e.semester}</td>
+                        <td>${credits}</td>
+                        <td><span class="badge ${getStatusBadgeClass(e.status)}">${e.status}</span></td>
+                        <td><strong>${e.grade || '-'}</strong></td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-light me-1" onclick="openEditModal('${e.id}')"><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteEnrollment('${e.id}')"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // Update Progress Bar
+            document.getElementById('totalCreditsView').textContent = totalCredits;
+            const percentage = Math.min((totalCredits / 130) * 100, 100);
+            document.getElementById('creditProgressBar').style.width = `${percentage}%`;
+
+            App.setupNavigation();
+        }
+
+        function openStudyPlan() {
+            if (activeStudentId) {
+                window.open(`study_plan.html?studentId=${activeStudentId}`, '_blank');
+            }
+        }
+
+        function openAddModal() {
+            if (!activeStudentId) return;
+            document.getElementById('enrollmentForm').reset();
+            document.getElementById('enrollmentId').value = '';
+            document.getElementById('modalTitle').textContent = 'Add Course Registration';
+            modal.show();
+        }
+
+        async function openEditModal(id) {
+            const enrollments = await Store.getEnrollments(activeStudentId);
+            const e = enrollments.find(x => x.id === id);
+            if (e) {
+                document.getElementById('enrollmentId').value = e.id;
+                document.getElementById('courseSelect').value = e.courseId;
+                document.getElementById('semesterInput').value = e.semester;
+                document.getElementById('statusSelect').value = e.status;
+                document.getElementById('gradeInput').value = e.grade || '';
+
+                document.getElementById('modalTitle').textContent = 'Update Registration Status';
+                modal.show();
+            }
+        }
+
+        async function saveEnrollment() {
+            const form = document.getElementById('enrollmentForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            if (!activeStudentId) {
+                App.showToast('No active student selected', 'danger');
+                return;
+            }
+
+            const id = document.getElementById('enrollmentId').value;
+            const data = {
+                studentId: activeStudentId,
+                courseId: document.getElementById('courseSelect').value,
+                semester: document.getElementById('semesterInput').value,
+                status: document.getElementById('statusSelect').value,
+                grade: document.getElementById('gradeInput').value
+            };
+
+            try {
+                if (id) {
+                    await Store.updateEnrollment(id, data);
+                    App.showToast('Registration updated');
+                } else {
+                    await Store.addEnrollment(data);
+                    App.showToast('Subject successfully registered');
+                }
+                modal.hide();
+                await renderTable();
+            } catch (err) {
+                App.showToast(err.message, 'danger');
+            }
+        }
+
+        async function deleteEnrollment(id) {
+            if (confirm('Are you sure you want to drop/delete this registration record? This action cannot be undone.')) {
+                try {
+                    await Store.deleteEnrollment(id);
+                    App.showToast('Registration deleted', 'warning');
+                    await renderTable();
+                } catch (err) {
+                    App.showToast('Error deleting registration', 'danger');
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

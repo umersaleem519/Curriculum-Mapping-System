@@ -1,0 +1,46 @@
+{
+    "cma_users": [
+        {
+            "id": "admin1",
+            "username": "admin",
+            "fullName": "System Administrator",
+            "password": "password",
+            "role": "admin",
+            "status": "approved"
+        },
+        {
+            "id": "fac1",
+            "username": "dr.smith",
+            "fullName": "Dr. John Smith",
+            "password": "password",
+            "role": "faculty",
+            "status": "approved"
+        },
+        {
+            "id": "fac2",
+            "username": "prof.doe",
+            "fullName": "Professor Jane Doe",
+            "password": "password",
+            "role": "faculty",
+            "status": "pending"
+        }
+    ],
+    "cma_depts": [
+        {
+            "id": "dept1",
+            "name": "Computer Science"
+        }
+    ],
+    "cma_progs": [
+        {
+            "id": "prog1",
+            "deptId": "dept1",
+            "name": "BS Software Engineering",
+            "code": "BSSE"
+        }
+    ],
+    "cma_courses": [],
+    "cma_plos": [],
+    "cma_clos": [],
+    "cma_mappings": []
+}

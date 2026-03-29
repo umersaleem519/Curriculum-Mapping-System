@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CurricAlign Pro - Study Plan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .semester-col {
+            min-width: 300px;
+        }
+
+        .course-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            transition: transform 0.2s;
+        }
+
+        .course-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .status-completed {
+            border-left: 4px solid #198754;
+        }
+
+        .status-enrolled {
+            border-left: 4px solid #0dcaf0;
+        }
+
+        .status-failed {
+            border-left: 4px solid #dc3545;
+        }
+
+        .status-unlocked {
+            border-left: 4px solid #0d6efd;
+            opacity: 0.8;
+        }
+
+        .status-locked {
+            border-left: 4px solid #6c757d;
+            opacity: 0.5;
+        }
+
+        .horizontal-scroll {
+            display: flex;
+            overflow-x: auto;
+            gap: 20px;
+            padding-bottom: 20px;
+        }
+
+        /* Custom scrollbar for horizontal scroll */
+        .horizontal-scroll::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .horizontal-scroll::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .horizontal-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <i class="fa-solid fa-layer-group me-2"></i> CurricAlign Pro
+            </a>
+            <div class="d-flex align-items-center ms-auto">
+                <a href="enrollments.html" class="btn btn-outline-light btn-sm"><i
+                        class="fa-solid fa-arrow-left me-1"></i> Back to Enrollments</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4 px-4">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2 class="mb-1" id="studentName">Student Study Plan</h2>
+                <p class="text-secondary mb-0" id="studentDetails">Loading student data...</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="glass-card p-3 d-inline-block text-start">
+                    <small class="text-secondary d-block">Earned Credits</small>
+                    <h3 class="mb-0 text-success" id="earnedCredits">0 <span class="fs-6 text-secondary">/ 130</span>
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Supplies / Failed Subjects Section -->
+        <div class="row mb-4 d-none" id="suppliesSection">
+            <div class="col-12">
+                <div class="glass-card border-danger p-4">
+                    <h5 class="text-danger mb-3"><i class="fa-solid fa-triangle-exclamation me-2"></i> Pending Supplies
+                        (Failed Subjects)</h5>
+                    <div class="row g-3" id="suppliesContainer">
+                        <!-- Failed courses injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Semester Grid -->
+        <div class="horizontal-scroll" id="semesterGrid">
+            <!-- Semesters injected here -->
+        </div>
+    </div>
+
+    <!-- Re-enroll Modal -->
+    <div class="modal fade" id="reenrollModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-white">
+                <div class="modal-header border-bottom border-secondary">
+                    <h5 class="modal-title">Re-enroll Subject</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="reenrollForm">
+                        <input type="hidden" id="reCourseId">
+                        <p>You are re-enrolling in: <strong id="reCourseName" class="text-info"></strong></p>
+                        <div class="mb-3">
+                            <label class="form-label">Re-enrollment Option</label>
+                            <select class="form-select form-control-custom mb-2" id="reEnrollOption">
+                                <option value="Summer Semester">Summer Semester</option>
+                                <option value="Next Semester">Next Semester</option>
+                                <option value="Ongoing Semester">Ongoing Semester</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Specify Academic Term / Year</label>
+                            <input type="text" class="form-control form-control-custom" id="reSemesterInput"
+                                placeholder="e.g. Fall 2026" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-top border-secondary">
+                    <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary-custom" onclick="submitReenroll()">Confirm
+                        Re-enrollment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/store.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script>
+        let student = null;
+        let allCourses = [];
+        let enrollments = [];
+        let reenrollModal = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const session = Store.getSession();
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            reenrollModal = new bootstrap.Modal(document.getElementById('reenrollModal'));
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const studentId = urlParams.get('studentId');
+
+            if (!studentId) {
+                document.getElementById('studentDetails').innerHTML = '<span class="text-danger">Error: No student selected.</span>';
+                return;
+            }
+
+            try {
+                const students = await Store.getStudents();
+                student = students.find(s => s.id === studentId);
+                if (!student) throw new Error('Student not found');
+
+                document.getElementById('studentName').textContent = `${student.name}'s Study Plan`;
+                document.getElementById('studentDetails').textContent = `${student.rollNumber} | ${student.batch} | ${student.section}`;
+
+                // Fetch data
+                allCourses = await Store.getCourses();
+                // Filter courses to match student's program
+                allCourses = allCourses.filter(c => c.progId === student.progId);
+
+                enrollments = await Store.getEnrollments(student.id);
+
+                renderStudyPlan();
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('studentDetails').innerHTML = `<span class="text-danger">Error: ${err.message}</span>`;
+            }
+        });
+
+        function renderStudyPlan() {
+            let totalCredits = 0;
+            let supplies = [];
+
+            // 1. Process courses and determine their current status for this student
+            const processedCourses = allCourses.map(course => {
+                // Find latest enrollment for this course
+                const courseEnrollments = enrollments.filter(e => e.courseId === course.id);
+                // Simple logic: if there is a 'Completed' one, it's completed.
+                // Otherwise if there is 'Enrolled', it's enrolled.
+                // Otherwise if 'Failed', it's failed.
+                let status = 'Pending';
+                let grade = '';
+
+                if (courseEnrollments.some(e => e.status === 'Completed')) {
+                    status = 'Completed';
+                    grade = courseEnrollments.find(e => e.status === 'Completed').grade;
+                    totalCredits += course.credits;
+                } else if (courseEnrollments.some(e => e.status === 'Enrolled')) {
+                    status = 'Enrolled';
+                } else if (courseEnrollments.some(e => e.status === 'Failed')) {
+                    status = 'Failed';
+                } else if (courseEnrollments.some(e => e.status === 'Dropped')) {
+                    status = 'Dropped';
+                }
+
+                // Check for historical failures to populate the Supplies track
+                const hasFailed = courseEnrollments.some(e => e.status === 'Failed');
+                // Only keep in supplies if they haven't completely passed it yet
+                if (hasFailed && status !== 'Completed') {
+                    const activeReenrollment = courseEnrollments.find(e => e.status === 'Enrolled');
+                    supplies.push({
+                        ...course,
+                        isCurrentlyEnrolled: status === 'Enrolled',
+                        activeEnrollmentId: activeReenrollment ? activeReenrollment.id : null
+                    });
+                }
+
+                // If pending/dropped, check prerequisites
+                let prereqsMet = true;
+                let pendingPrereqs = [];
+
+                if (status === 'Pending' || status === 'Dropped') {
+                    if (course.prerequisites && course.prerequisites.length > 0) {
+                        for (const pId of course.prerequisites) {
+                            const pEnrollments = enrollments.filter(e => e.courseId === pId);
+                            if (!pEnrollments.some(e => e.status === 'Completed')) {
+                                prereqsMet = false;
+                                const pObj = allCourses.find(c => c.id === pId);
+                                if (pObj) pendingPrereqs.push(pObj.code);
+                            }
+                        }
+                    }
+                    if (prereqsMet) {
+                        status = 'Unlocked';
+                    } else {
+                        status = 'Locked';
+                    }
+                }
+
+                return { ...course, uiStatus: status, uiGrade: grade, pendingPrereqs };
+            });
+
+            // Update Header
+            document.getElementById('earnedCredits').innerHTML = `${totalCredits} <span class="fs-6 text-secondary">/ 130</span>`;
+
+            // Render Supplies
+            const suppliesSection = document.getElementById('suppliesSection');
+            const suppliesContainer = document.getElementById('suppliesContainer');
+            if (supplies.length > 0) {
+                suppliesSection.classList.remove('d-none');
+                suppliesContainer.innerHTML = supplies.map(c => `
+                    <div class="col-md-4">
+                        <div class="glass-card p-3 border border-danger bg-danger bg-opacity-10 d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1 text-white">${c.code}</h6>
+                                <p class="mb-0 text-secondary small">${c.title} (${c.credits} Cr)</p>
+                            </div>
+                            ${c.isCurrentlyEnrolled ? `
+                                <button class="btn btn-sm btn-outline-danger" onclick="withdrawReenrollment('${c.activeEnrollmentId}')">
+                                    <i class="fa-solid fa-xmark"></i> Withdraw
+                                </button>
+                            ` : `
+                                <button class="btn btn-sm btn-danger" onclick="openReenrollModal('${c.id}', '${c.code} - ${c.title}')">
+                                    Re-Enroll
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                suppliesSection.classList.add('d-none');
+            }
+
+            // Group by Semester (1-8 and Electives)
+            const semestersData = {};
+            processedCourses.forEach(c => {
+                const s = c.semester || 0;
+                if (!semestersData[s]) semestersData[s] = [];
+                semestersData[s].push(c);
+            });
+
+            // Render Grid
+            const grid = document.getElementById('semesterGrid');
+            grid.innerHTML = '';
+
+            for (let i = 1; i <= 8; i++) {
+                if (!semestersData[i]) continue;
+
+                let sHtml = `
+                <div class="semester-col">
+                    <h5 class="mb-3 text-info border-bottom border-info border-opacity-25 pb-2">Semester ${i}</h5>
+                    <div class="d-flex flex-column gap-2">
+                `;
+
+                semestersData[i].forEach(c => {
+                    let badgeClass = 'bg-secondary';
+                    let icon = '';
+                    let colorClass = 'status-locked';
+
+                    if (c.uiStatus === 'Completed') {
+                        badgeClass = 'bg-success'; icon = '<i class="fa-solid fa-check text-success"></i>'; colorClass = 'status-completed';
+                    } else if (c.uiStatus === 'Enrolled') {
+                        badgeClass = 'bg-info text-dark'; icon = '<i class="fa-solid fa-spinner fa-spin text-info"></i>'; colorClass = 'status-enrolled';
+                    } else if (c.uiStatus === 'Failed') {
+                        badgeClass = 'bg-danger'; icon = '<i class="fa-solid fa-xmark text-danger"></i>'; colorClass = 'status-failed';
+                    } else if (c.uiStatus === 'Unlocked') {
+                        badgeClass = 'bg-primary'; icon = '<i class="fa-solid fa-lock-open text-primary"></i>'; colorClass = 'status-unlocked';
+                    } else if (c.uiStatus === 'Locked') {
+                        badgeClass = 'bg-dark border border-secondary'; icon = '<i class="fa-solid fa-lock text-secondary"></i>'; colorClass = 'status-locked';
+                    }
+
+                    let prereqWarning = '';
+                    if (c.uiStatus === 'Locked' && c.pendingPrereqs.length > 0) {
+                        prereqWarning = `<div class="small text-warning mt-2"><i class="fa-solid fa-triangle-exclamation"></i> Requires: ${c.pendingPrereqs.join(', ')}</div>`;
+                    }
+
+                    let gradeDisplay = c.uiGrade ? `<span class="badge bg-light text-dark ms-2">Grade: ${c.uiGrade}</span>` : '';
+
+                    sHtml += `
+                        <div class="course-card ${colorClass}">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-0 text-white">${c.code} ${icon}</h6>
+                                <span class="badge bg-dark">${c.credits} Cr</span>
+                            </div>
+                            <p class="text-secondary small mb-2 lh-sm" style="min-height: 2.5em;">${c.title}</p>
+                            <div class="d-flex align-items-center">
+                                <span class="badge ${badgeClass}">${c.uiStatus}</span>
+                                ${gradeDisplay}
+                            </div>
+                            ${prereqWarning}
+                        </div>
+                    `;
+                });
+
+                sHtml += `</div></div>`;
+                grid.innerHTML += sHtml;
+            }
+
+            // Render Electives (Semester 0)
+            if (semestersData[0] && semestersData[0].length > 0) {
+                // similar rendering logic for electives if needed, skipped for brevity in standard BS IT
+            }
+        }
+
+        function openReenrollModal(courseId, courseName) {
+            document.getElementById('reCourseId').value = courseId;
+            document.getElementById('reCourseName').textContent = courseName;
+            document.getElementById('reSemesterInput').value = '';
+            reenrollModal.show();
+        }
+
+        async function submitReenroll() {
+            const form = document.getElementById('reenrollForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const courseId = document.getElementById('reCourseId').value;
+            const option = document.getElementById('reEnrollOption').value;
+            const term = document.getElementById('reSemesterInput').value;
+            const targetSemester = `${option} (${term})`;
+
+            try {
+                // Add new enrollment logic
+                const data = {
+                    studentId: student.id,
+                    courseId: courseId,
+                    semester: targetSemester,
+                    status: 'Enrolled',
+                    grade: ''
+                };
+
+                await Store.addEnrollment(data);
+                App.showToast('Successfully re-enrolled in subject!');
+                reenrollModal.hide();
+
+                // Refresh data
+                enrollments = await Store.getEnrollments(student.id);
+                renderStudyPlan();
+
+            } catch (err) {
+                App.showToast(err.message, 'danger');
+            }
+        }
+
+        async function withdrawReenrollment(enrollmentId) {
+            if (confirm('Are you sure you want to withdraw from this re-enrollment? You will be able to select a new semester option.')) {
+                try {
+                    await Store.deleteEnrollment(enrollmentId);
+                    App.showToast('Re-enrollment withdrawn successfully.', 'info');
+
+                    // Refresh data
+                    enrollments = await Store.getEnrollments(student.id);
+                    renderStudyPlan();
+                } catch (err) {
+                    App.showToast(err.message || 'Failed to withdraw re-enrollment.', 'danger');
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

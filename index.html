@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CurricAlign Pro - Dashboard</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <i class="fa-solid fa-layer-group me-2"></i> CurricAlign Pro
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link active" href="index.html">Dashboard</a></li>
+                    <li class="nav-item admin-only"><a class="nav-link" href="programs.html">Programs</a></li>
+                    <li class="nav-item admin-only"><a class="nav-link" href="admin_users.html">Users</a></li>
+                    <li class="nav-item"><a class="nav-link" href="students.html">Students</a></li>
+                    <li class="nav-item"><a class="nav-link" href="enrollments.html">Enrollments</a></li>
+                    <li class="nav-item"><a class="nav-link" href="plos.html">PLOs</a></li>
+                    <li class="nav-item">
+                    <li class="nav-item">
+
+
+
+                    <li class="nav-item"><a class="nav-link" href="courses.html">Courses</a></li>
+                    <li class="nav-item"><a class="nav-link" href="clos.html">CLOs</a></li>
+                    <li class="nav-item"><a class="nav-link" href="mapping.html">Mapping Matrix</a></li>
+                    <li class="nav-item admin-only"><a class="nav-link" href="reports.html">Reports</a></li>
+                    <li class="nav-item admin-only"><a class="nav-link" href="settings.html">Settings</a></li>
+                    <li class="nav-item ms-3 d-flex align-items-center">
+                        <span id="userDisplay" class="text-secondary me-3 small"></span>
+                        <button class="btn btn-sm btn-outline-danger" onclick="App.logout()">Logout</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-5 page-container">
+
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <h1 class="mb-1">Overview Dashboard</h1>
+                <p class="text-secondary mb-0">At-a-glance view of your curriculum mapping progress.</p>
+            </div>
+            <a href="mapping.html" class="btn btn-primary-custom">
+                <i class="fa-solid fa-code-branch me-2"></i> Go to Mapping
+            </a>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-3">
+                <div class="glass-card p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-secondary mb-1">Total PLOs</p>
+                            <h2 class="mb-0" id="stat-plos">0</h2>
+                        </div>
+                        <div class="stat-icon icon-purple">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-card p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-secondary mb-1">Total Courses</p>
+                            <h2 class="mb-0" id="stat-courses">0</h2>
+                        </div>
+                        <div class="stat-icon icon-blue">
+                            <i class="fa-solid fa-book"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-card p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-secondary mb-1">Total CLOs</p>
+                            <h2 class="mb-0" id="stat-clos">0</h2>
+                        </div>
+                        <div class="stat-icon icon-emerald">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass-card p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-secondary mb-1">Total Alignments</p>
+                            <h2 class="mb-0" id="stat-mappings">0</h2>
+                        </div>
+                        <div class="stat-icon icon-pink">
+                            <i class="fa-solid fa-link"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row g-4">
+            <div class="col-md-8">
+                <div class="glass-card p-4 h-100">
+                    <h5 class="mb-4">CLO to PLO Coverage</h5>
+                    <div style="height: 300px; position: relative;">
+                        <!-- We will use a bar chart to show how many CLOs map to each PLO -->
+                        <canvas id="coverageChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="glass-card p-4 h-100">
+                    <h5 class="mb-4">Quick Actions</h5>
+                    <div class="d-grid gap-3">
+                        <a href="programs.html" class="btn btn-outline-custom text-start admin-only">
+                            <i class="fa-solid fa-list me-2 text-warning"></i> Manage Programs
+                        </a>
+                        <a href="plos.html" class="btn btn-outline-custom text-start admin-only">
+                            <i class="fa-solid fa-plus me-2 text-purple"></i> Add New PLO
+                        </a>
+                        <a href="courses.html" class="btn btn-outline-custom text-start admin-only">
+                            <i class="fa-solid fa-plus me-2 text-blue"></i> Add New Course
+                        </a>
+                        <a href="clos.html" class="btn btn-outline-custom text-start">
+                            <i class="fa-solid fa-plus me-2 text-emerald"></i> Define CLOs
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="assets/js/store.js"></script>
+    <script src="assets/js/app.js"></script>
+
+    <!-- Dashboard Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const session = Store.getSession();
+            if (!session) { window.location.href = 'login.html'; return; }
+
+            try {
+                const plos = await Store.getPLOs();
+                let courses = await Store.getCourses();
+                let clos = await Store.getCLOs();
+                let mappings = await Store.getMappings();
+
+                if (session.role === 'faculty') {
+                    // Faculty only see their customized numbers
+                    courses = courses.filter(c => c.facultyId === session.id);
+                    const assignedCourseIds = courses.map(c => c.id);
+                    clos = clos.filter(c => assignedCourseIds.includes(c.courseId));
+
+                    const myCloIds = clos.map(c => c.id);
+                    mappings = mappings.filter(m => myCloIds.includes(m.cloId));
+
+                    document.getElementById('stat-programs')?.parentElement?.parentElement?.classList.add('d-none'); // Hide programs stat for faculty
+                    document.getElementById('stat-plos')?.parentElement?.parentElement?.classList.add('d-none'); // Hide PLO stat
+                } else {
+                    // Admin dashboard settings
+                    document.getElementById('stat-plos').textContent = plos.length;
+
+                    const users = await Store.getUsers();
+                    const pendingUsers = users.filter(u => u.status === 'pending').length;
+                    if (pendingUsers > 0) {
+                        const notice = document.createElement('div');
+                        notice.className = 'alert alert-warning d-flex justify-content-between align-items-center mb-4';
+                        notice.innerHTML = `
+                            <span><i class="fa-solid fa-circle-exclamation me-2"></i> You have <strong>${pendingUsers}</strong> pending faculty registration(s) requiring approval.</span>
+                            <a href="admin_users.html" class="btn btn-sm btn-outline-dark">Review Users</a>
+                        `;
+                        document.querySelector('.page-container').insertBefore(notice, document.querySelector('.row'));
+                    }
+                }
+
+                document.getElementById('stat-courses').textContent = courses.length;
+                document.getElementById('stat-clos').textContent = clos.length;
+                document.getElementById('stat-mappings').textContent = mappings.length;
+
+                App.setupNavigation();
+
+                // Initialize Chart
+                const ctx = document.getElementById('coverageChart').getContext('2d');
+
+                Chart.defaults.color = '#94a3b8';
+                Chart.defaults.font.family = "'Inter', sans-serif";
+
+                // Prepare Data for Chart: Group Mappings by PLO
+                const ploLabels = plos.map(p => p.code);
+                const ploCounts = plos.map(p => {
+                    return mappings.filter(m => m.ploId === p.id).length;
+                });
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ploLabels.length ? ploLabels : ['No PLOs Yet'],
+                        datasets: [{
+                            label: 'Aligned CLOs',
+                            data: ploLabels.length ? ploCounts : [0],
+                            backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                            borderColor: 'rgb(99, 102, 241)',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { precision: 0 },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error("Backend fetch error:", err);
+                const container = document.querySelector('.page-container');
+                const errorNotice = document.createElement('div');
+                errorNotice.className = 'alert alert-danger shadow-sm border-0 border-start border-danger border-4 d-flex align-items-center mb-4';
+                errorNotice.innerHTML = `
+                    <i class="fa-solid fa-server fa-2x me-3 text-danger"></i>
+                    <div>
+                        <h5 class="mb-1 text-danger">Local Server is Not Running</h5>
+                        <p class="mb-0">The application could not connect to the backend database. To fix this, please ensure your local server is running (e.g. by running <code>npm start</code> or waiting for Auto-Run to initialize in VS Code).</p>
+                    </div>
+                `;
+                container.insertBefore(errorNotice, container.firstChild);
+                App.showToast('Failed to connect to the backend server.', 'danger');
+            }
+        });
+    </script>
+</body>
+
+</html>

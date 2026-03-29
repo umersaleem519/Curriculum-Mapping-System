@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - CurricAlign Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-card {
+            max-width: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-container">
+        <div class="glass-card login-card p-5 text-center">
+            <h2 class="mb-4"
+                style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                CurricAlign Pro</h2>
+            <p class="text-secondary mb-4">Sign in to manage academic accreditations</p>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="mb-3 text-start">
+                    <label class="form-label">Username</label>
+                    <input type="text" id="username" class="form-control form-control-custom" required
+                        placeholder="admin OR dr.smith">
+                </div>
+                <div class="mb-4 text-start">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="password" class="form-control form-control-custom" required
+                        placeholder="password">
+                </div>
+                <button type="submit" class="btn btn-primary-custom w-100 mb-3">Sign In</button>
+            </form>
+
+            <a href="signup.html" class="text-secondary text-decoration-none small">Don't have an account? Sign Up</a>
+
+            <div class="mt-4 text-start text-secondary small">
+                <strong>Demo Accounts:</strong><br>
+                Admin: <code>admin</code> / <code>password</code><br>
+                Faculty: <code>dr.smith</code> / <code>password</code>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="assets/js/store.js"></script>
+    <script>
+        // Check for pending URL param
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('pending') === 'true') {
+            alert('Your account is still waiting for Administrator approval.');
+        }
+
+        // Inline check since app.js redirects to index on public pages if logged in
+        const session = Store.getSession();
+        if (session && session.status === 'approved') {
+            window.location.href = 'index.html';
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+
+            const status = await Store.login(user, pass);
+
+            if (status === 'approved') {
+                window.location.href = 'index.html';
+            } else if (status === 'pending') {
+                Store.logout(); // Don't let them have a session
+                alert('Account Under Review. An Administrator must approve your account before you can log in.');
+            } else {
+                alert('Invalid Username or Password');
+            }
+        }
+    </script>
+</body>
+
+</html>

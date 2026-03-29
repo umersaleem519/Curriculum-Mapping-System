@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CurricAlign Pro - Reports</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <i class="fa-solid fa-layer-group me-2"></i> CurricAlign Pro
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Dashboard</a></li>
+                    <li class="nav-item admin-only"><a class="nav-link" href="programs.html">Programs</a></li>
+                    <li class="nav-item"><a class="nav-link" href="plos.html">PLOs</a></li>
+                    <li class="nav-item"><a class="nav-link" href="courses.html">Courses</a></li>
+                    <li class="nav-item"><a class="nav-link" href="clos.html">CLOs</a></li>
+                    <li class="nav-item"><a class="nav-link" href="mapping.html">Mapping Matrix</a></li>
+                    <li class="nav-item admin-only"><a class="nav-link active" href="reports.html">Reports</a></li>
+                    <li class="nav-item ms-3 d-flex align-items-center">
+                        <span id="userDisplay" class="text-secondary me-3 small"></span>
+                        <button class="btn btn-sm btn-outline-danger" onclick="App.logout()">Logout</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5 page-container mb-5">
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <h1 class="mb-1">Curriculum Reports</h1>
+                <p class="text-secondary mb-0">Direct overview of PLO coverage and mapping completion.</p>
+            </div>
+            <button class="btn btn-outline-custom" onclick="exportPDF()">
+                <i class="fa-solid fa-file-pdf me-2 text-danger"></i> Export as PDF
+            </button>
+        </div>
+
+        <!-- Filters -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <label class="form-label text-secondary small">Filter by Program</label>
+                <select class="form-select form-control-custom" id="progFilter" onchange="generateReports(true)">
+                    <option value="ALL">All Programs (Institution Wide)</option>
+                </select>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label text-secondary small">Filter by Student <span class="badge bg-purple ms-1">New</span></label>
+                <select class="form-select form-control-custom" id="studentFilter" onchange="generateReports(true)">
+                    <option value="ALL">All Students (Aggregate)</option>
+                </select>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label text-secondary small">Completion Status (All Students Only)</label>
+                <select class="form-select form-control-custom" id="statusFilter" ... onchange="generateReports(true)">
+                    <option value="ALL">Show All Courses</option>
+                    <option value="COMPLETED">Fully Mapped (100%)</option>
+                    <option value="REMAINING">Needs Mapping (< 100%)</option>
+                    <option value="EMPTY">Completely Unmapped (0%)</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="pdfContent">
+            <div class="row g-4 mb-4" id="aggregateChartsRow">
+                <!-- Program Coverage (Radar Chart) -->
+                <div class="col-md-6">
+                    <div class="glass-card p-4 h-100">
+                        <h5 class="mb-4">Overall PLO Mapping Frequency</h5>
+                        <p class="text-secondary small mb-3">Total number of CLOs directly mapped to each PLO.</p>
+                        <div style="height: 350px; position: relative;" class="w-100 d-flex justify-content-center">
+                            <canvas id="radarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mapping Distribution (Donut Chart) -->
+                <div class="col-md-6">
+                    <div class="glass-card p-4 h-100">
+                        <h5 class="mb-4">Curriculum Completion (Mapped vs Unmapped)</h5>
+                        <p class="text-secondary small mb-3">Ratio of CLOs that have been successfully mapped vs those
+                            pending.</p>
+                        <div style="height: 350px; position: relative;" class="w-100 d-flex justify-content-center">
+                            <canvas id="donutChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Specific Metrics (Hidden by default) -->
+            <div class="row g-4 mb-4 d-none" id="studentMetricsRow">
+                <div class="col-md-6">
+                    <div class="glass-card p-4 h-100 d-flex flex-column justify-content-center align-items-center text-center">
+                        <h5 class="mb-2 text-secondary">Aggregate CGPA</h5>
+                        <div class="display-1 fw-bold text-info mb-2" id="studentCGPA">0.00</div>
+                        <p class="text-white-50 small">Calculated from completed courses</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="glass-card p-4 h-100 d-flex flex-column justify-content-center align-items-center text-center">
+                        <h5 class="mb-2 text-secondary">Degree Completion</h5>
+                        <div class="display-1 fw-bold text-success mb-2" id="studentDegreePercent">0%</div>
+                        <p class="text-white-50 small">Earned Credits / Program Required Credits</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coverage Data Table -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="glass-card p-4">
+                        <h5 class="mb-4 d-flex align-items-center">
+                            <i class="fa-solid fa-list-check me-2 text-purple"></i> Mapping Breakdown
+                        </h5>
+                        <div class="table-responsive">
+                            <table class="table table-custom">
+                                <thead>
+                                    <tr>
+                                        <th>Program</th>
+                                        <th>Course</th>
+                                        <th>Total Topics (CLOs)</th>
+                                        <th>Covered Topics</th>
+                                        <th>Completion %</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- End of pdfContent -->
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="assets/js/store.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script>
+        let radarChart, donutChart;
+        let progsMap = {};
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const session = Store.getSession();
+            if (session && session.role !== 'admin') {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Setup Program Filter
+            const progs = await Store.getPrograms();
+            const progFilter = document.getElementById('progFilter');
+            progs.forEach(p => {
+                progsMap[p.id] = p.code;
+                progFilter.innerHTML += `<option value="${p.id}">${p.name} (${p.code})</option>`;
+            });
+
+            // Setup Student Filter
+            const students = await Store.getStudents();
+            const stuFilter = document.getElementById('studentFilter');
+            students.forEach(s => {
+                stuFilter.innerHTML += `<option value="${s.id}">${s.name} (${s.rollNumber})</option>`;
+            });
+
+            await generateReports();
+            App.setupNavigation();
+        });
+
+        async function generateReports(isFilterChange = false) {
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#94a3b8', usePointStyle: true, padding: 20 }
+                    }
+                }
+            };
+
+            const filterProg = document.getElementById('progFilter').value;
+            const filterStudent = document.getElementById('studentFilter').value;
+            let statusFilter = document.getElementById('statusFilter').value;
+            
+            // If viewing a specific student, force 'ALL' status filter to see their transcript
+            if (filterStudent !== 'ALL') {
+                document.getElementById('statusFilter').value = 'ALL';
+                statusFilter = 'ALL';
+                document.getElementById('statusFilter').disabled = true;
+            } else {
+                document.getElementById('statusFilter').disabled = false;
+            }
+
+            let allPlos = await Store.getPLOs();
+            let allCourses = await Store.getCourses();
+            let allClos = await Store.getCLOs();
+            const allMappings = await Store.getMappings();
+            
+            let studentEnrollments = [];
+            const isStudentView = filterStudent !== 'ALL';
+
+            // Filter data if a specific program is selected
+            if (filterProg !== 'ALL') {
+                allPlos = allPlos.filter(p => p.progId === filterProg);
+                allCourses = allCourses.filter(c => c.progId === filterProg);
+                const courseIds = allCourses.map(c => c.id);
+                allClos = allClos.filter(c => courseIds.includes(c.courseId));
+            }
+
+            if (isStudentView) {
+                studentEnrollments = await Store.getEnrollments(filterStudent);
+                // In student view, only show courses they have some enrollment record for
+                const enrolledCourseIds = studentEnrollments.map(e => e.courseId);
+                allCourses = allCourses.filter(c => enrolledCourseIds.includes(c.id));
+                
+                // Toggle UI
+                document.getElementById('aggregateChartsRow').classList.add('d-none');
+                document.getElementById('studentMetricsRow').classList.remove('d-none');
+            } else {
+                document.getElementById('aggregateChartsRow').classList.remove('d-none');
+                document.getElementById('studentMetricsRow').classList.add('d-none');
+            }
+
+            // ============================
+            // AGGREGATE CHARTS (Radar/Donut)
+            // ============================
+            if (!isStudentView) {
+                const radarCtx = document.getElementById('radarChart').getContext('2d');
+
+                const ploLabels = allPlos.map(p => p.code);
+                const ploScores = allPlos.map(p => {
+                    return allMappings.filter(m => m.ploId === p.id).length;
+                });
+
+                if (radarChart) radarChart.destroy();
+                radarChart = new Chart(radarCtx, {
+                    type: 'radar',
+                    data: {
+                        labels: ploLabels.length ? ploLabels : ['No PLOs'],
+                        datasets: [{
+                            label: 'Total CLOs Mapped',
+                            data: ploLabels.length ? ploScores : [0],
+                            backgroundColor: 'rgba(16, 185, 129, 0.2)', // Greenish
+                            borderColor: '#10b981',
+                            pointBackgroundColor: '#10b981',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: '#10b981'
+                        }]
+                    },
+                    options: { ...commonOptions, scales: { r: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, pointLabels: { color: '#94a3b8' } } } }
+                });
+
+                const donutCtx = document.getElementById('donutChart').getContext('2d');
+
+                let globalCoveredTopics = 0;
+                let globalTotalTopics = 0;
+
+                allCourses.forEach(c => {
+                    const cClos = allClos.filter(clo => clo.courseId === c.id);
+                    const totalTopics = cClos.length;
+                    globalTotalTopics += totalTopics;
+
+                    if (c.completion !== undefined && c.completion !== null) {
+                        globalCoveredTopics += Math.round((c.completion / 100) * totalTopics);
+                    } else {
+                        cClos.forEach(clo => {
+                            if (allMappings.some(m => m.cloId === clo.id)) {
+                                globalCoveredTopics++;
+                            }
+                        });
+                    }
+                });
+
+                const globalRemainingTopics = globalTotalTopics - globalCoveredTopics;
+
+                if (donutChart) donutChart.destroy();
+                donutChart = new Chart(donutCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Covered Topics (Completed)', 'Pending/Remaining'],
+                        datasets: [{
+                            data: [globalCoveredTopics, globalRemainingTopics],
+                            backgroundColor: ['#10b981', '#334155'], // Bright green vs slate gray
+                            borderWidth: 0
+                        }]
+                    },
+                    options: commonOptions
+                });
+            }
+
+            // ============================
+            // STUDENT METRICS (CGPA)
+            // ============================
+            if (isStudentView) {
+                let totalGradePoints = 0;
+                let totalCreditsAttempted = 0;
+                let earnedCredits = 0;
+                
+                // standard bsit program required credits = roughly 130
+                const requiredCredits = 130; 
+
+                const GRADE_POINTS = {
+                    'A': 4.0, 'A-': 3.7, 'B+': 3.3, 'B': 3.0, 'B-': 2.7,
+                    'C+': 2.3, 'C': 2.0, 'C-': 1.7, 'D+': 1.3, 'D': 1.0, 'F': 0.0
+                };
+
+                studentEnrollments.forEach(enr => {
+                    // Get course to determine credits (assuming all are 3 credits roughly if not defined)
+                    // Lab is usually 1, theory 3.
+                    const isLab = allCourses.find(c => c.id === enr.courseId)?.code?.endsWith('L');
+                    const courseCredits = isLab ? 1 : 3;
+
+                    if (enr.status === 'Completed' || enr.status === 'Failed') {
+                        const gp = GRADE_POINTS[enr.grade] || 0.0;
+                        totalGradePoints += (gp * courseCredits);
+                        totalCreditsAttempted += courseCredits;
+                        
+                        if (enr.status === 'Completed') {
+                            earnedCredits += courseCredits;
+                        }
+                    }
+                });
+
+                const cgpa = totalCreditsAttempted > 0 ? (totalGradePoints / totalCreditsAttempted).toFixed(2) : '0.00';
+                const degreeCompletionStr = Math.round((earnedCredits / requiredCredits) * 100);
+
+                document.getElementById('studentCGPA').innerText = cgpa;
+                document.getElementById('studentDegreePercent').innerText = `${degreeCompletionStr}%`;
+            }
+
+            // ============================
+            // TABLE GENERATION
+            // ============================
+            const thead = document.querySelector('#reportTableBody').previousElementSibling;
+            if (isStudentView) {
+                thead.innerHTML = `
+                    <tr>
+                        <th>Semester</th>
+                        <th>Course</th>
+                        <th>Status</th>
+                        <th>Grade</th>
+                    </tr>
+                `;
+            } else {
+                thead.innerHTML = `
+                    <tr>
+                        <th>Program</th>
+                        <th>Course</th>
+                        <th>Total Topics (CLOs)</th>
+                        <th>Covered Topics</th>
+                        <th>Completion %</th>
+                    </tr>
+                `;
+            }
+
+            const tbody = document.getElementById('reportTableBody');
+            tbody.innerHTML = '';
+
+            let coursesProcessed = 0;
+
+            allCourses.forEach(c => {
+                if (isStudentView) {
+                    const enr = studentEnrollments.find(e => e.courseId === c.id);
+                    if (!enr) return; // Should not happen given outer filter
+
+                    coursesProcessed++;
+                    
+                    let statusBadgeClass = 'bg-secondary';
+                    if (enr.status === 'Completed') statusBadgeClass = 'bg-success';
+                    else if (enr.status === 'Failed') statusBadgeClass = 'bg-danger';
+                    else if (enr.status === 'Enrolled') statusBadgeClass = 'bg-info text-dark';
+
+                    let gradeVisual = enr.grade ? `<strong>${enr.grade}</strong>` : `<span class="text-secondary">-</span>`;
+                    if (enr.grade === 'F') gradeVisual = `<strong class="text-danger">F</strong>`;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><span class="badge bg-dark">${enr.semester}</span></td>
+                            <td><strong>${c.code}</strong><br><small class="text-secondary">${c.title}</small></td>
+                            <td><span class="badge ${statusBadgeClass}">${enr.status}</span></td>
+                            <td>${gradeVisual}</td>
+                        </tr>
+                    `;
+
+                } else {
+                    const cClos = allClos.filter(clo => clo.courseId === c.id);
+                    const totalTopics = cClos.length;
+                    let mappedTopics = 0;
+
+                    // Priority: User's manual completion percentage
+                    if (c.completion !== undefined && c.completion !== null) {
+                        mappedTopics = Math.round((c.completion / 100) * totalTopics);
+                    } else {
+                        cClos.forEach(clo => {
+                            if (allMappings.some(m => m.cloId === clo.id)) {
+                                mappedTopics++;
+                            }
+                        });
+                    }
+
+                    // The completion percent to display
+                    const completionPercent = c.completion !== undefined && c.completion !== null 
+                        ? c.completion 
+                        : (totalTopics > 0 ? Math.round((mappedTopics / totalTopics) * 100) : 0);
+
+                    // Apply Status Filter
+                    if (statusFilter === 'COMPLETED' && completionPercent < 100) return;
+                    if (statusFilter === 'REMAINING' && completionPercent === 100) return;
+                    if (statusFilter === 'EMPTY' && completionPercent > 0) return;
+
+                    coursesProcessed++;
+
+                    const progCode = progsMap[c.progId] || 'All';
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><span class="badge bg-secondary">${progCode}</span></td>
+                            <td><strong>${c.code}</strong><br><small class="text-secondary">${c.title}</small></td>
+                            <td><span class="badge bg-dark">${totalTopics}</span></td>
+                            <td class="${completionPercent === 100 ? 'text-success' : 'text-warning'}"><strong>${mappedTopics}</strong></td>
+                            <td>
+                                <div class="input-group input-group-sm" style="width: 120px;">
+                                    <input type="number" class="form-control bg-dark text-white border-secondary text-center" 
+                                        value="${completionPercent}" 
+                                        min="0" max="100"
+                                        id="comp-input-${c.id}">
+                                    <span class="input-group-text bg-dark text-secondary border-secondary">%</span>
+                                    <button class="btn btn-outline-info" type="button" onclick="updateCourseCompletion('${c.id}')" title="Save Completion">
+                                        <i class="fa-solid fa-save"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+
+            if (coursesProcessed === 0) {
+                const colSpan = isStudentView ? 4 : 5;
+                tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center text-secondary py-4">No data matches the selected filters.</td></tr>`;
+            }
+        }
+
+        async function updateCourseCompletion(courseId) {
+            try {
+                const inputEl = document.getElementById(`comp-input-${courseId}`);
+                if (!inputEl) return;
+                
+                let completionNum = parseInt(inputEl.value);
+                if (isNaN(completionNum)) completionNum = 0;
+                if (completionNum > 100) completionNum = 100;
+                if (completionNum < 0) completionNum = 0;
+                
+                const allCourses = await Store.getCourses();
+                const course = allCourses.find(c => c.id === courseId);
+                
+                if (!course) return;
+                
+                const updatedCourse = { ...course, completion: completionNum };
+                await Store.updateCourse(courseId, updatedCourse);
+                
+                App.showToast('Course completion updated globally', 'success');
+                // Re-render the table with fresh data
+                generateReports();
+            } catch (err) {
+                console.error(err);
+                App.showToast('Failed to update course completion', 'danger');
+            }
+        }
+
+        function exportPDF() {
+            const element = document.getElementById('pdfContent');
+            const opt = {
+                margin: 0.5,
+                filename: 'Curriculum_Report.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            // Add a temporary white background for the PDF export so text is readable
+            element.style.backgroundColor = '#1e1e2f';
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.style.backgroundColor = ''; // restore
+            });
+        }
+    </script>
+    <style>
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+
+            .navbar,
+            .btn {
+                display: none !important;
+            }
+
+            .glass-card {
+                background: white !important;
+                border: 1px solid #ddd !important;
+                box-shadow: none !important;
+                page-break-inside: avoid;
+            }
+
+            .text-secondary {
+                color: #666 !important;
+            }
+
+            .text-white {
+                color: black !important;
+            }
+
+            canvas {
+                filter: invert(1);
+            }
+
+            /* Basic hack for dark-theme charts in print */
+        }
+    </style>
+</body>
+
+</html>
